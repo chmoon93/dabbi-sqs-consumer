@@ -1,15 +1,23 @@
 APPNAME := dabbi-sqs-consumer
+PKG := github.com/chmoon93/$(APPNAME)
 OS := linux
 PLATFORM := amd64
-VERSION := $(strip $(shell cat VERSION.txt))
-COMMIT := $(shell git rev-parse --short --verify HEAD)
 DATE := $(shell date +%F-%T%z)
 
-GO_LDFLAGS += -X main.appName=${APPNAME}
-GO_LDFLAGS += -X main.buildVersion=${VERSION}
-GO_LDFLAGS += -X main.buildCommit=${COMMIT}
-GO_LDFLAGS += -X main.buildDate=${DATE}
-GO_LDFLAGS := -ldflags="$(GO_LDFLAGS) -s -w"
+VERSION := $(strip $(shell cat VERSION.txt))
+GITCOMMIT := $(shell git rev-parse --short --verify HEAD)
+GITUNTRACKEDCHANGES := $(shell git status --porcelain --untracked-files=no) -X main.buildDate=${DATE}
+ifneq ($(GITUNTRACKEDCHANGES),)
+	GITCOMMIT := $(GITCOMMIT)-dirty
+endif
+CTIMEVAR=-X main.appName=${APPNAME} -X main.buildVersion=${VERSION} -X main.buildCommit=${GITCOMMIT} -X main.buildDate=${DATE}
+GO_LDFLAGS=-ldflags "-w -s $(CTIMEVAR)"
+
+#---
+
+# define build-target
+# env	GOOS=$(OS) GOARCH=$(PLATFORM) go build -v $(GO_LDFLAGS) -o ./$(APPNAME) ./cmd/$(APPNAME).go
+# endef
 
 # BUILD
 .PHONY: build-app
@@ -32,7 +40,7 @@ build-docker-prod:
 	@$(call build-docker,"zmon",$(APPNAME),$(VERSION))
 
 .PHONY: all
-all: build-app build-docker-dev clean
+all: build-app # build-docker-dev clean
 
 .PHONY: clean
 clean:
