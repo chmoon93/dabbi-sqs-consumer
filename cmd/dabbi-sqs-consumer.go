@@ -13,7 +13,7 @@ import (
 	"github.com/chmoon93/dabbi-sqs-consumer/consume"
 	"github.com/chmoon93/dabbi-sqs-consumer/log"
 
-	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	aws "github.com/aws/aws-sdk-go-v2/config"
 )
 
 // inject from ldflags
@@ -25,12 +25,12 @@ var buildDate = ""
 func startConsumeMessagesFromSQS() context.CancelFunc {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
-	cfg, err := awsConfig.LoadDefaultConfig(context.TODO(), awsConfig.WithRegion("ap-northeast-2"))
+	awsConfig, err := aws.LoadDefaultConfig(context.TODO(), aws.WithRegion("ap-northeast-2"))
 	if err != nil {
 		log.Debug("unable to load SDK config, %v", err)
 	}
 
-	go consume.ConsumeMessages(ctx, cfg)
+	go consume.ConsumeMessages(ctx, awsConfig)
 
 	return cancelFunc
 }

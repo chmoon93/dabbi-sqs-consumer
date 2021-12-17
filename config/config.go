@@ -26,7 +26,11 @@ type appConfig struct {
 	LogLevel     string // LOG_LEVEL
 
 	// AWS SQS
-	SQSName string
+	SQSName     string
+	SQSWaitTime uint
+
+	AccessKey       string
+	SecretAccessKey string
 
 	// Database
 	// DbIP       string //	MARIA_DB_IP
@@ -51,16 +55,8 @@ func (config *configHandler) setConfigByDefault(appName string, buildVersion str
 		BuildCommit:  buildCommit,
 		BuildDate:    buildDate,
 		LogLevel:     "DEBUG",
-		SQSName:      "dabbi-sqs",
-		// DbIP:              "",
-		// DbPort:            0,
-		// DbName:            "",
-		// DbUserName:        "",
-		// DbPassword:        "",
-		// KafkaTopic:        "",
-		// KafkaBrokers:      []string{},
-		// AutoCloseDuration: 60,
-		// AlertCheckYn:      "Y",
+		SQSName:      "",
+		SQSWaitTime:  0,
 	}
 }
 
@@ -71,7 +67,12 @@ func (config *configHandler) PrintConfig() {
 	fmt.Printf("# Build Commit     : %s\n", gConfig.BuildCommit)
 	fmt.Printf("# Build Date       : %s\n", gConfig.BuildDate)
 	fmt.Printf("# LogLevel         : %s\n", gConfig.LogLevel)
+
 	fmt.Printf("# SQSName          : %s\n", gConfig.SQSName)
+	fmt.Printf("# SQSWaitTime      : %d\n", gConfig.SQSWaitTime)
+
+	fmt.Printf("# AccessKey        : %s\n", gConfig.AccessKey)
+	fmt.Printf("# SecretAccessKey  : %s\n", gConfig.SecretAccessKey)
 
 	// fmt.Printf("# DbIp             : %s\n", gConfig.DbIP)
 	// fmt.Printf("# DbPort           : %d\n", gConfig.DbPort)
@@ -100,6 +101,26 @@ func LoadConfig(appName string, buildVersion string, buildCommit string, buildDa
 
 	// LOG_LEVEL
 	if err := loadEnvAsStr(&gConfig.LogLevel, "LOG_LEVEL", REQUIRE_FALSE); err != nil {
+		return nil, err
+	}
+
+	// SQS_NAME
+	if err := loadEnvAsStr(&gConfig.SQSName, "SQS_NAME", REQUIRE_TRUE); err != nil {
+		return nil, err
+	}
+
+	// SQS_WAIT_TIME
+	if err := loadEnvAsUInt(&gConfig.SQSWaitTime, "SQS_WAIT_TIME", REQUIRE_TRUE); err != nil {
+		return nil, err
+	}
+
+	// AWS_ACCESS_KEY_ID
+	if err := loadEnvAsStr(&gConfig.AccessKey, "AWS_ACCESS_KEY_ID", REQUIRE_FALSE); err != nil {
+		return nil, err
+	}
+
+	// AWS_SECRET_ACCESS_KEY
+	if err := loadEnvAsStr(&gConfig.SecretAccessKey, "AWS_SECRET_ACCESS_KEY", REQUIRE_FALSE); err != nil {
 		return nil, err
 	}
 
@@ -154,23 +175,3 @@ func loadIntEnv(configVal *uint, envKey string, defaultValue uint) {
 		*configVal = uint(envVal)
 	}
 }
-
-// func GetDataSource() string {
-// 	return fmt.Sprintf("%s:%s@(%s:%d)/%s?%s",
-// 		gConfig.DbUserName,
-// 		gConfig.DbPassword,
-// 		gConfig.DbIP,
-// 		gConfig.DbPort,
-// 		gConfig.DbName,
-// 		DB_CONNECTION_PARAM)
-// }
-
-// func (config *configHandler) GetDataSource() string {
-// 	return fmt.Sprintf("%s:%s@(%s:%d)/%s?%s",
-// 		gConfig.DbUserName,
-// 		gConfig.DbPassword,
-// 		gConfig.DbIP,
-// 		gConfig.DbPort,
-// 		gConfig.DbName,
-// 		DB_CONNECTION_PARAM)
-// }

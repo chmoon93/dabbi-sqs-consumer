@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-dabbi-sqs-consumer
+  namespace: keda-test
+data:
+  SQS_NAME: "dabbi-sqs"
+  SQS_WAIT_TIME: "5"

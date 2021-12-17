@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	"github.com/chmoon93/dabbi-sqs-consumer/config"
 	"github.com/chmoon93/dabbi-sqs-consumer/log"
 )
 
@@ -65,14 +66,13 @@ func RemoveMessage(c context.Context, api SQSDeleteMessageAPI, input *sqs.Delete
 	return api.DeleteMessage(c, input)
 }
 
-func ConsumeMessages(ctx context.Context, cfg aws.Config) {
-	// for {
-	// 	log.Info("consume messages")
-	// }
+func ConsumeMessages(ctx context.Context, awsConfig aws.Config) {
 
-	client := sqs.NewFromConfig(cfg)
+	appConfig := config.GetConfigHandler()
+
+	client := sqs.NewFromConfig(awsConfig)
 	input := &sqs.GetQueueUrlInput{
-		QueueName: aws.String("dabbi-sqs"),
+		QueueName: aws.String(appConfig.SQSName),
 	}
 
 	result, err := GetQueueURL(context.TODO(), client, input)
@@ -83,11 +83,11 @@ func ConsumeMessages(ctx context.Context, cfg aws.Config) {
 	}
 
 	log.Info("# QueueURL: ", *result.QueueUrl)
-	waitTime := 5
+	// waitTime := 5
 	queueURL := result.QueueUrl
 
 	for {
-		log.Info("111")
+		log.Info("Long Polling ...")
 		mInput := &sqs.ReceiveMessageInput{
 			QueueUrl: queueURL,
 			AttributeNames: []types.QueueAttributeName{
@@ -97,7 +97,7 @@ func ConsumeMessages(ctx context.Context, cfg aws.Config) {
 			MessageAttributeNames: []string{
 				"All",
 			},
-			WaitTimeSeconds: int32(waitTime),
+			WaitTimeSeconds: int32(appConfig.SQSWaitTime),
 		}
 
 		resp, err := GetLPMessages(context.TODO(), client, mInput)

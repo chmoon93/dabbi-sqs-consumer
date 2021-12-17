@@ -2,3 +2,4 @@
 .vscode
 .idea
 .secret
+./dabbi-sqs-consumer

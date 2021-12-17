@@ -1,0 +1,43 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: test-secrets
+  namespace: keda-test
+data:
+  AWS_ACCESS_KEY_ID: [AWS_ACCESS_KEY_ID]
+  AWS_SECRET_ACCESS_KEY: [AWS_SECRET_ACCESS_KEY]
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: keda-trigger-auth-aws-credentials
+  namespace: keda-test
+spec:
+  secretTargetRef:
+  - parameter: awsAccessKeyID     # Required.
+    name: test-secrets            # Required.
+    key: AWS_ACCESS_KEY_ID        # Required.
+  - parameter: awsSecretAccessKey # Required.
+    name: test-secrets            # Required.
+    key: AWS_SECRET_ACCESS_KEY    # Required.
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: aws-sqs-queue-scaledobject
+  namespace: keda-test
+spec:
+  scaleTargetRef:
+    name: dabbi-sqs-consumer
+  idleReplicaCount: 0
+  minReplicaCount: 1
+  maxReplicaCount: 20
+  triggers:
+  - type: aws-sqs-queue
+    authenticationRef:
+      name: keda-trigger-auth-aws-credentials
+    metadata:
+      queueURL: [QUEUE_URL]
+      queueLength: "3"
+      awsRegion: "ap-northeast-2"
